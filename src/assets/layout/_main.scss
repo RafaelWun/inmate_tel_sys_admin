@@ -1,0 +1,16 @@
+.layout-main-container {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 56px);
+    // justify-content: space-between;
+    // margin-top: 5rem;
+    padding: 1rem;
+    transition: margin-left var(--layout-section-transition-duration);
+}
+
+.layout-main {
+    flex: 1 1 auto;
+    overflow: auto;
+    // padding-bottom: 1rem;
+}
