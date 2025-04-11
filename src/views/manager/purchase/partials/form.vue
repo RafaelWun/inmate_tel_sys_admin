@@ -41,7 +41,6 @@ const isFormValid = computed(() => {
 onMounted(async () => {
     form.date = new Date().toISOString().split('T')[0];
     await loadOptions();
-    await loadPurchaseData();
 });
 
 /** Functions */
@@ -56,11 +55,20 @@ const delVoucher = (index) => {
     form.vouchers.splice(index, 1);
 };
 
+const preventNegative = (index) => {
+    if (form.vouchers[index].quantity < 0) {
+        form.vouchers[index].quantity = 0;
+    }
+};
+
 const loadPurchaseData = async (uuid) => {
     const res = await readPurchase(uuid);
+    console.log('response load purchase data: ', res);
     if (res.success) {
+        console.log('success: ', res);
         purchaseData.value = res.data;
     } else {
+        console.log('error: ', res);
         toast.add({ severity: 'error', summary: 'Gagal mengambil data pesanan!', detail: res.message, life: 5000 });
     }
 };
@@ -96,18 +104,16 @@ const handleSubmit = async () => {
         return;
     }
 
-    const actionMap = {
-        update: updatePurchase,
-        create: createPurchase
-    };
-
-    if (!actionMap[props.action]) return;
-
-    const res = await actionMap[props.action](form);
+    let res;
+    if (props.action === 'update') {
+        res = await updatePurchase({ ...form, purchases: form.vouchers.map((v) => ({ ...v })) });
+    } else {
+        res = await createPurchase(form);
+    }
 
     toast.add({
         severity: res.success ? 'success' : 'error',
-        summary: res.success ? 'Berhasil!' : 'Gagal!',
+        summary: res.success ? 'Berhasil!' : '[views] Gagal!',
         detail: res.message,
         life: 5000
     });
@@ -171,6 +177,7 @@ watch(
 
 <template>
     <form v-if="props.action === 'create' || props.action === 'update'" @submit.prevent="handleSubmit" class="flex flex-col gap-4">
+        <p v-text="form.uuid" />
         <div class="flex flex-col gap-2">
             <label v-text="'No. PO'" />
             <InputText v-model="form.po_number" placeholder="Masukkan nomor pre-order" type="text" class="min-w-96" />
@@ -179,16 +186,17 @@ watch(
             <label v-text="'Lapas'" />
             <Select v-model="form.facility_uuid" :options="options.facilities" option-label="name" option-value="uuid" placeholder="Pilih lokasi lapas" type="text" class="min-w-96" />
         </div>
-        <div v-for="(item, index) in form.vouchers" :key="index" class="flex items-end gap-4">
-            <div class="flex flex-col gap-2 w-full">
+        <div class="flex flex-col gap-2">
+            <div class="grid gap-4" style="grid-template-columns: 2fr 1fr 40px">
                 <label v-text="'Voucher'" />
-                <Select v-model="form.vouchers[index].voucher_type_uuid" :options="options.voucherTypes" option-label="name" option-value="uuid" placeholder="Pilih voucher" type="text" class="w-full" />
-            </div>
-            <div class="flex flex-col gap-2">
                 <label v-text="'Jumlah'" />
-                <InputText v-model="form.vouchers[index].quantity" type="number" class="w-24" />
+                <div />
             </div>
-            <Button @click="delVoucher(index)" icon="pi pi-times" variant="text" severity="danger" class="aspect-square min-w-10" />
+            <div v-for="(item, index) in form.vouchers" :key="index" class="grid gap-4" style="grid-template-columns: 2fr 1fr 40px">
+                <Select v-model="form.vouchers[index].voucher_type_uuid" :options="options.voucherTypes" option-label="name" option-value="uuid" placeholder="Pilih voucher" type="text" class="w-full" />
+                <InputText v-model="form.vouchers[index].quantity" type="number" class="w-24" @input="preventNegative(index)" />
+                <Button @click="delVoucher(index)" icon="pi pi-times" variant="text" severity="danger" class="aspect-square min-w-10" />
+            </div>
         </div>
         <Button @click="addVoucher" icon="pi pi-plus" label="Tambah Voucher" severity="secondary" class="mr-auto" />
         <hr />

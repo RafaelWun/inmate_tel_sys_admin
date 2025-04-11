@@ -1,5 +1,13 @@
 import * as voucherType from './api/voucherType';
 
+const formatRupiah = (number) => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(number);
+};
+
 export const createVoucherType = async (payload) => {
     try {
         await voucherType.create(payload);
@@ -16,9 +24,15 @@ export const readVoucherType = async (params) => {
         let voucherTypeList;
 
         if (typeof params === 'object' || params === undefined) {
-            voucherTypeList = rawData.data;
+            voucherTypeList = rawData.data.map((item) => ({
+                ...item,
+                price: formatRupiah(item.price) // Format harga ke Rupiah
+            }));
         } else {
-            voucherTypeList = rawData;
+            voucherTypeList = {
+                ...rawData,
+                price: formatRupiah(rawData.price) // Format harga jika hanya satu item
+            };
         }
 
         return {

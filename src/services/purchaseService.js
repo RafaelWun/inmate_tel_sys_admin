@@ -62,7 +62,7 @@ export const updatePurchase = async (payload) => {
         await purchase.update(payload);
         return { success: true, message: 'Data pemesanan berhasil diperbarui.' };
     } catch (error) {
-        return { success: false, message: error.message };
+        return { success: false, message: `[services] ${error.message}` };
     }
 };
 

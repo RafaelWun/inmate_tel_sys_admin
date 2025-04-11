@@ -18,3 +18,15 @@ export const update = (payload) => {
 export const del = (id) => {
     return axios.delete(`/${namespace}/${id}`);
 };
+
+export const resetPin = (payload) => {
+    return axios.post(`/${namespace}/reset-pin`, payload);
+};
+
+export const redeem = (payload) => {
+    return axios.post('/redeem', payload);
+};
+
+export const getBalance = (payload) => {
+    return axios.post('/get-balance', payload);
+};

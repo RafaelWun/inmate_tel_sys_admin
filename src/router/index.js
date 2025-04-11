@@ -8,10 +8,19 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    const authStore = useAuth();
-    if (to.meta.requiresAuth && !authStore.token) next('/auth');
-    else if (to.meta.guestOnly && authStore.token) next('/');
-    else next();
+    const userRoles = useAuth().user?.roles.map((r) => r.name) || [];
+
+    if (to.meta.requiresAuth && !useAuth().token) next('/auth');
+    if (to.meta.guestOnly && useAuth().token) next('/');
+
+    if (to.meta.roles) {
+        const hasAccess = userRoles.some((role) => to.meta.roles.includes(role));
+        if (!hasAccess) {
+            return next('/unauthorized');
+        }
+    }
+
+    next();
 });
 
 export default router;

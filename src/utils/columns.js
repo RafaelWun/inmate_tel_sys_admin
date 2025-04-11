@@ -1,23 +1,15 @@
 export const deviceCols = [
     {
-        key: 'ip_address',
-        label: 'Alamat IP'
-    },
-    {
         key: 'code',
         label: 'Kode Perangkat'
-    },
-    {
-        key: 'block',
-        label: 'Blok'
     },
     {
         key: 'facility_name',
         label: 'Lokasi Perangkat'
     },
     {
-        key: 'iccid',
-        label: 'ICCID'
+        key: 'block',
+        label: 'Blok'
     },
     {
         key: 'msisdn',
@@ -26,6 +18,10 @@ export const deviceCols = [
     {
         key: 'imei',
         label: 'IMEI'
+    },
+    {
+        key: 'ip_address',
+        label: 'Alamat IP'
     }
 ];
 

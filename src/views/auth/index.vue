@@ -23,7 +23,14 @@ const handleLogin = async () => {
         await authStore.login(form);
         sysMsg.value = 'Selamat datang kembali! Selamat beraktivitas.';
         toast.add({ severity: 'success', summary: 'Login Berhasil!', detail: sysMsg.value, life: 5000 });
-        router.replace('/');
+        const userRoles = authStore.user?.roles.map((r) => r.name) || [];
+        console.log(userRoles);
+        if (userRoles.includes('Administrator')) {
+            router.replace('/device-list');
+        }
+        if (userRoles.includes('Operator')) {
+            router.replace('/prisoner-list');
+        }
     } catch (error) {
         sysMsg.value = 'Something went wrong';
         toast.add({ severity: 'error', summary: 'Login Gagal!', detail: sysMsg.value, life: 5000 });
@@ -46,7 +53,7 @@ const handleLogin = async () => {
                     <label v-text="'Password'" />
                     <input-text v-model="form.password" type="password" placeholder="Masukkan password Anda" class="w-96" />
                 </div>
-                <div class="ml-auto text-blue-500 hover:underline">Lupa Password?</div>
+                <!-- <div class="ml-auto text-blue-500 hover:underline">Lupa Password?</div> -->
                 <hr />
                 <Button type="submit" icon="pi pi-sign-in" label="Verifikasi" severity="info" />
             </form>

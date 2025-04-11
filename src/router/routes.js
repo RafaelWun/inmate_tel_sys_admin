@@ -8,43 +8,55 @@ const routes = [
         children: [
             {
                 path: '/',
-                name: 'dashboard',
-                component: () => import('@/views/dashboard.vue')
+                name: 'home',
+                component: () => import('@/views/index.vue'),
+                meta: { roles: ['Administrator'] }
             },
             {
                 path: '/device-list',
                 name: 'devices',
-                component: () => import('@/views/manager/device/index.vue')
+                component: () => import('@/views/manager/device/index.vue'),
+                meta: { roles: ['Administrator', 'Operator'] }
             },
             {
                 path: '/facility-list',
                 name: 'facilities',
-                component: () => import('@/views/manager/facility/index.vue')
+                component: () => import('@/views/manager/facility/index.vue'),
+                meta: { roles: ['Administrator'] }
             },
             {
                 path: '/prisoner-list',
                 name: 'prisoners',
-                component: () => import('@/views/manager/prisoner/index.vue')
+                component: () => import('@/views/manager/prisoner/index.vue'),
+                meta: { roles: ['Administrator', 'Operator'] }
             },
             {
                 path: '/voucher-purchase',
                 name: 'buyVoucher',
-                component: () => import('@/views/manager/purchase/index.vue')
+                component: () => import('@/views/manager/purchase/index.vue'),
+                meta: { roles: ['Administrator'] }
             },
             {
                 path: '/voucher-type-list',
                 name: 'voucherTypes',
-                component: () => import('@/views/manager/voucher-types/index.vue')
+                component: () => import('@/views/manager/voucher-types/index.vue'),
+                meta: { roles: ['Administrator'] }
             },
             {
                 path: '/user-list',
                 name: 'users',
-                component: () => import('@/views/access-control/user/index.vue')
+                component: () => import('@/views/access-control/user/index.vue'),
+                meta: { roles: ['Administrator'] }
             },
             {
                 path: '/role-list',
                 name: 'roles',
-                component: () => import('@/views/access-control/role/index.vue')
+                component: () => import('@/views/access-control/role/index.vue'),
+                meta: { roles: ['Administrator'] }
+            },
+            {
+                path: '/unauthorized',
+                component: () => import('@/views/misc/401.vue')
             }
         ]
     },

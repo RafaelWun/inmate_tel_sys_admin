@@ -49,3 +49,30 @@ export const deletePrisoner = async (id) => {
         return { success: false, message: error.message };
     }
 };
+
+export const resetPinPrisoner = async (payload) => {
+    try {
+        await prisoner.resetPin(payload);
+        return { success: true, message: 'Reset pin tahanan berhasil.' };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+};
+
+export const redeemVoucher = async (payload) => {
+    try {
+        await prisoner.redeem(payload);
+        return { success: true, message: 'Redeem voucher berhasil' };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+};
+
+export const getPrisonerBalance = async (payload) => {
+    try {
+        const res = await prisoner.getBalance(payload);
+        return { success: true, message: res.data.data.amount };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+};

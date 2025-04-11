@@ -12,6 +12,7 @@ const { isVisible, action, targetId, openModal, closeModal } = useModal();
 const toast = useToast();
 
 /** Variables */
+const pending = ref(false);
 const facilityList = ref([]);
 const totalRecords = ref(0);
 const currentPage = ref(1);
@@ -24,6 +25,7 @@ onMounted(async () => {
 
 /** Functions */
 const loadFacilityList = async () => {
+    pending.value = true;
     const res = await readFacility({ _page: currentPage.value, _limit: pageSize.value });
     if (res.success) {
         facilityList.value = res.data;
@@ -31,6 +33,7 @@ const loadFacilityList = async () => {
     } else {
         toast.add({ severity: 'error', summary: 'Gagal mengambil daftar lapas!', detail: res.message, life: 5000 });
     }
+    pending.value = false;
 };
 
 const onPageChange = (event) => {
@@ -43,16 +46,16 @@ const onPageChange = (event) => {
 <template>
     <div class="card flex">
         <h4 v-text="'Daftar Lapas'" />
-        <Button @click="openModal('register')" icon="pi pi-plus" label="Registrasi Lapas" severity="info" class="ml-auto" />
+        <!-- <Button @click="openModal('register')" icon="pi pi-plus" label="Registrasi Lapas" severity="info" class="ml-auto" /> -->
     </div>
     <div class="card overflow-auto">
-        <DataTable :value="facilityList" :lazy="true" striped-rows>
+        <DataTable :value="facilityList" :lazy="true" :loading="pending" striped-rows>
             <Column v-for="col in facilityCols" :key="col.key" :field="col.key" :header="col.label" />
             <Column>
                 <template #body="{ data }">
                     <div class="space-x-2 float-right">
                         <Button @click="openModal('update', data.uuid)" icon="pi pi-pencil" severity="info" class="aspect-square" />
-                        <Button @click="openModal('delete', data.uuid)" icon="pi pi-trash" severity="danger" class="aspect-square" />
+                        <!-- <Button @click="openModal('delete', data.uuid)" icon="pi pi-trash" severity="danger" class="aspect-square" /> -->
                     </div>
                 </template>
             </Column>

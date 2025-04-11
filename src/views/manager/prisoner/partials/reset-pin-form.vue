@@ -1,21 +1,38 @@
 <script setup>
+import { resetPinPrisoner } from '@/services/prisonerService';
+import { useToast } from 'primevue';
 import { ref } from 'vue';
+
+const toast = useToast();
 
 const props = defineProps({
     targetId: String,
     targetName: String,
     action: String
 });
-const emits = defineEmits(['close']);
+const emits = defineEmits(['close', 'refresh']);
 
 const pinInput = ref('');
 
-const handleReset = () => {
+const handleReset = async () => {
     const payload = {
         prisoner_uuid: props.targetId,
         pin: pinInput.value
     };
-    console.log('payload: ', payload);
+
+    const res = await resetPinPrisoner(payload);
+
+    toast.add({
+        severity: res.success ? 'success' : 'error',
+        summary: res.success ? 'Berhasil!' : 'Gagal!',
+        detail: res.message,
+        life: 5000
+    });
+
+    if (res.success) {
+        emits('close');
+        emits('refresh');
+    }
 };
 </script>
 

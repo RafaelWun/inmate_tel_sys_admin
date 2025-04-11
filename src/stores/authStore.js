@@ -11,6 +11,9 @@ export const useAuth = defineStore('auth', {
         user: JSON.parse(localStorage.getItem(STORAGE_KEY)) || null,
         token: localStorage.getItem(TOKEN_KEY) || null
     }),
+    getters: {
+        getUserRoles: (state) => state.user?.roles?.map((role) => role.name) || []
+    },
     actions: {
         async login(payload) {
             const res = await login(payload);

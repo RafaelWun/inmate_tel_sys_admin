@@ -124,6 +124,28 @@ const handleDelete = async () => {
     }
 };
 
+const handleReset = async (ip_add) => {
+    if (!ip_add) {
+        toast.add({ severity: 'warn', summary: 'Gagal reset layar perangkat!', detail: 'IP Address perangkat tidak valid.', life: 5000 });
+        return;
+    }
+
+    const endpoint = `http://${ip_add}:5000/reset`;
+
+    try {
+        const res = await fetch(endpoint, {
+            method: 'POST'
+        });
+
+        if (res) {
+            toast.add({ severity: 'success', summary: 'Berhasil reset layar perangkat!', detail: 'Layar perangkat sudah di reset.', life: 5000 });
+            emits('close');
+        }
+    } catch (error) {
+        toast.add({ severity: 'danger', summary: 'Gagal reset layar perangkat!', detail: 'Error Internal.', life: 5000 });
+    }
+};
+
 /** Watchers */
 watch(
     () => props.targetId,
@@ -157,45 +179,45 @@ watch(
 </script>
 
 <template>
-    <form v-if="props.action === 'register' || props.action === 'update'" @submit.prevent="handleSubmit" class="flex flex-col gap-4">
+    <form v-if="props.action === 'register' || props.action === 'update' || props.action === 'read'" @submit.prevent="handleSubmit" class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
             <label v-text="'Kode'" />
-            <InputText v-model="form.code" placeholder="Masukkan kode perangkat" type="text" class="min-w-80" />
+            <InputText v-model="form.code" placeholder="Masukkan kode perangkat" type="text" :disabled="props.action === 'update' || props.action === 'read'" class="min-w-80" />
         </div>
         <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-2">
                 <label v-text="'Lapas'" />
-                <Select v-model="form.facility_uuid" :options="options.facilities" option-label="name" option-value="uuid" placeholder="Pilih lokasi lapas" type="text" class="min-w-80" />
+                <Select v-model="form.facility_uuid" :options="options.facilities" option-label="name" option-value="uuid" :disabled="props.action === 'read'" placeholder="Pilih lokasi lapas" type="text" class="min-w-80" />
             </div>
             <div class="flex flex-col gap-2">
                 <label v-text="'Kode'" />
-                <Select v-model="form.block" :options="options.blocks" placeholder="Pilih blok lapas" type="text" class="min-w-80" />
+                <Select v-model="form.block" :options="options.blocks" :disabled="props.action === 'read'" placeholder="Pilih blok lapas" type="text" class="min-w-80" />
             </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-2">
                 <label v-text="'IMEI'" />
-                <InputText v-model="form.imei" placeholder="Masukkan IMEI perangkat" type="text" class="min-w-80" />
+                <InputText v-model="form.imei" placeholder="Masukkan IMEI perangkat" :disabled="props.action === 'read'" type="text" class="min-w-80" />
             </div>
             <div class="flex flex-col gap-2">
                 <label v-text="'ICCID'" />
-                <InputText v-model="form.iccid" placeholder="Masukkan ICCID perangkat" type="text" class="min-w-80" />
+                <InputText v-model="form.iccid" placeholder="Masukkan ICCID perangkat" :disabled="props.action === 'read'" type="text" class="min-w-80" />
             </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-2">
                 <label v-text="'MSISDN'" />
-                <InputText v-model="form.msisdn" placeholder="Masukkan MSISDN perangkat" type="text" class="min-w-80" />
+                <InputText v-model="form.msisdn" placeholder="Masukkan MSISDN perangkat" :disabled="props.action === 'read'" type="text" class="min-w-80" />
             </div>
             <div class="flex flex-col gap-2">
                 <label v-text="'IP Address'" />
-                <InputText v-model="form.ip_address" placeholder="Masukkan IP address perangkat" type="text" class="min-w-80" />
+                <InputText v-model="form.ip_address" placeholder="Masukkan IP address perangkat" :disabled="props.action === 'read'" type="text" class="min-w-80" />
             </div>
         </div>
         <hr />
         <div class="flex justify-end gap-2">
-            <Button @click="emits('close')" type="button" icon="pi pi-angle-left" label="Batalkan" severity="secondary" />
-            <Button type="submit" icon="pi pi-save" label="Submit" :disabled="!isFormValid" severity="info" />
+            <Button @click="emits('close')" type="button" icon="pi pi-angle-left" :label="props.action === 'read' ? 'Kembali' : 'Batalkan'" :severity="props.action === 'read' ? 'info' : 'secondary'" />
+            <Button v-if="props.action !== 'read'" type="submit" icon="pi pi-save" label="Submit" :disabled="!isFormValid" severity="info" />
         </div>
     </form>
     <div v-if="props.action === 'delete'">
@@ -204,6 +226,14 @@ watch(
         <div class="flex justify-end gap-2">
             <Button @click="emits('close')" type="button" icon="pi pi-angle-left" label="Batalkan" severity="secondary" />
             <Button @click="handleDelete" icon="pi pi-trash" label="Hapus" severity="danger" />
+        </div>
+    </div>
+    <div v-if="props.action === 'reset'">
+        <p>Apakah Anda yakin ingin reset layar perangkat <b v-text="form.code" class="text-amber-500" />?</p>
+        <hr />
+        <div class="flex justify-end gap-2">
+            <Button @click="emits('close')" type="button" icon="pi pi-angle-left" label="Batalkan" severity="secondary" />
+            <Button @click="handleReset(form.ip_address)" icon="pi pi-refresh" label="Reset" severity="warn" />
         </div>
     </div>
 </template>

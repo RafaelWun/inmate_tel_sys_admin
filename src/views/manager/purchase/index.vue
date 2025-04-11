@@ -12,6 +12,7 @@ const { isVisible, action, targetId, openModal, closeModal } = useModal();
 const toast = useToast();
 
 /** Variables */
+const pending = ref(false);
 const purchaseList = ref([]);
 const totalRecords = ref(0);
 const currentPage = ref(1);
@@ -24,6 +25,7 @@ onMounted(async () => {
 
 /** Functions */
 const loadPurchaseList = async () => {
+    pending.value = true;
     const res = await readPurchase({ _page: currentPage.value, _limit: pageSize.value, _sort: 'date', _order: 'desc' });
     if (res.success) {
         purchaseList.value = res.data;
@@ -31,6 +33,7 @@ const loadPurchaseList = async () => {
     } else {
         toast.add({ severity: 'error', summary: 'Gagal mengambil daftar pesanan!', detail: res.message, life: 5000 });
     }
+    pending.value = false;
 };
 
 const onPageChange = (event) => {
@@ -46,22 +49,21 @@ const onPageChange = (event) => {
         <Button @click="openModal('create')" icon="pi pi-plus" label="PO Voucher" severity="info" class="ml-auto" />
     </div>
     <div class="card overflow-auto">
-        <DataTable :value="purchaseList" :lazy="true" striped-rows>
+        <DataTable :value="purchaseList" :lazy="true" :loading="pending" striped-rows>
             <Column v-for="col in purchaseCols" :key="col.key" :field="col.key" :header="col.label" />
             <Column field="status" header="Status" />
             <Column>
                 <template #body="{ data }">
                     <div class="space-x-2 float-right">
-                        <Button @click="openModal('view', data.uuid)" icon="pi pi-eye" severity="secondary" class="aspect-square" />
                         <Button @click="openModal('update', data.uuid)" icon="pi pi-pencil" severity="info" class="aspect-square" />
-                        <Button @click="openModal('delete', data.uuid)" icon="pi pi-trash" severity="danger" class="aspect-square" />
+                        <!-- <Button @click="openModal('delete', data.uuid)" icon="pi pi-trash" severity="danger" class="aspect-square" /> -->
                     </div>
                 </template>
             </Column>
         </DataTable>
         <Paginator :rows="pageSize" :totalRecords="totalRecords" @page="onPageChange" class="mt-4" />
     </div>
-    <Dialog v-model:visible="isVisible" :header="generateModalTitle(action, 'Voucher')" :modal="true">
+    <Dialog v-model:visible="isVisible" :header="generateModalTitle(action, 'Pesanan')" :modal="true">
         <purchaseForm :target-id="targetId" :action="action" @close="closeModal" @refresh="loadPurchaseList" />
     </Dialog>
 </template>

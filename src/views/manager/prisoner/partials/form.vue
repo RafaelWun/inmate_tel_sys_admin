@@ -2,7 +2,7 @@
 /** Imports */
 import { useModal } from '@/composables/modal';
 import { readFacility } from '@/services/facilityService';
-import { createPrisoner, deletePrisoner, readPrisoner, updatePrisoner } from '@/services/prisonerService';
+import { createPrisoner, deletePrisoner, getPrisonerBalance, readPrisoner, redeemVoucher, updatePrisoner } from '@/services/prisonerService';
 import { useToast } from 'primevue';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import resetPinForm from './reset-pin-form.vue';
@@ -19,6 +19,9 @@ const emits = defineEmits(['close', 'refresh']);
 
 /** Variables */
 const prisonerData = ref({});
+const voucherInput = ref('');
+const prisonerBalance = ref(0);
+const facility_name = ref('');
 
 const form = reactive({
     uuid: '',
@@ -48,6 +51,8 @@ const nikInput = computed(() => {
 /** Lifecycle Hooks */
 onMounted(async () => {
     await loadOptions();
+    const balanceRes = await getPrisonerBalance({ prisoner_uuid: props.targetId });
+    prisonerBalance.value = balanceRes.message;
 });
 
 /** Functions */
@@ -163,6 +168,27 @@ const handleDelete = async () => {
     }
 };
 
+const handleRedeem = async () => {
+    if (!voucherInput.value) {
+        toast.add({ severity: 'warn', summary: 'Kode Voucher Salah!', detail: 'Pastikan kode voucher valid.', life: 5000 });
+        return;
+    }
+
+    const res = await redeemVoucher({ voucher_code: voucherInput.value, prisoner_uuid: form.uuid });
+
+    toast.add({
+        severity: res.success ? 'success' : 'error',
+        summary: res.success ? 'Berhasil redeem voucher!' : 'Gagal redeem voucher!',
+        detail: res.message,
+        life: 5000
+    });
+
+    if (res.success) {
+        emits('close');
+        emits('refresh');
+    }
+};
+
 /** Watchers */
 watch(
     () => props.targetId,
@@ -179,7 +205,7 @@ watch(
     () => prisonerData.value,
     (newData) => {
         if (newData) {
-            console.log('uuid prisoner: ', newData.uuid);
+            facility_name.value = newData.facility.name;
             Object.assign(form, {
                 uuid: newData.uuid || '',
                 name: newData.name || '',
@@ -204,7 +230,7 @@ watch(
             </div>
             <div class="flex flex-col gap-2">
                 <label v-text="'NIK'" />
-                <InputText v-model="form.nik" @input="handleNikInput" :value="nikInput" placeholder="Masukkan NIK tahanan" type="text" />
+                <InputText v-model="form.nik" @input="handleNikInput" :value="nikInput" :disabled="props.action === 'update'" placeholder="Masukkan NIK tahanan" type="text" />
             </div>
         </div>
         <div class="grid grid-cols-2 gap-4 max-w-4xl">
@@ -217,7 +243,7 @@ watch(
                 <Select v-model="form.block" :options="options.blocks" placeholder="Pilih blok lapas" type="text" />
             </div>
         </div>
-        <div v-show="props.action === 'create'" class="flex flex-col gap-2">
+        <div v-show="props.action === 'register'" class="flex flex-col gap-2">
             <label v-text="'Pin Akun'" />
             <InputText v-model="form.pin" placeholder="Masukkan pin untuk tahanan" type="text" />
         </div>
@@ -232,12 +258,41 @@ watch(
             <Button type="submit" icon="pi pi-save" label="Submit" :disabled="!isFormValid" severity="info" />
         </div>
     </form>
+    <div v-if="props.action === 'balance'" class="flex flex-col gap-4 min-w-80">
+        <p>Sisa Saldo <b v-text="form.name" class="text-blue-500" />: <b v-text="prisonerBalance" /></p>
+    </div>
+    <div v-if="props.action === 'redeem'" class="flex flex-col gap-4 min-w-80">
+        <div class="flex flex-col gap-2">
+            <label v-text="'Nama Tahanan'" />
+            <InputText v-model="form.name" placeholder="Masukkan nama tahanan" type="text" disabled />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label v-text="'Kode Voucher'" />
+            <InputText v-model="voucherInput" placeholder="Masukkan kode voucher" type="text" />
+        </div>
+        <div class="flex gap-2">
+            <Button @click="handleRedeem" icon="pi pi-cart-plus" label="Redeem" severity="info" class="ml-auto" />
+        </div>
+    </div>
     <div v-if="props.action === 'read'" class="flex flex-col gap-4">
-        <div class="overflow-auto h-[600px]">
+        <div>
+            <h5 v-if="form" class="font-normal text-blue-500">{{ form.name }} - {{ form.nik }} / {{ facility_name }} - Blok {{ form.block }}</h5>
+        </div>
+        <div class="overflow-auto max-h-96">
             <DataTable :value="prisonerData.calls" :lazy="true">
                 <Column field="created_at" header="Tanggal">
                     <template #body="{ data }">
                         {{ formatDate(data.created_at) }}
+                    </template>
+                </Column>
+                <Column field="start_time" header="Panggilan Dimulai">
+                    <template #body="{ data }">
+                        {{ formatDate(data.start_time) }}
+                    </template>
+                </Column>
+                <Column field="end_time" header="Panggilan Diakhiri">
+                    <template #body="{ data }">
+                        {{ formatDate(data.end_time) }}
                     </template>
                 </Column>
                 <Column field="duration" header="Durasi">
@@ -255,9 +310,11 @@ watch(
                         </Badge>
                     </template>
                 </Column>
+                <!-- <Column field="device_code" header="Perangkat" /> -->
             </DataTable>
         </div>
         <div class="flex justify-end gap-2">
+            <Button @click="loadPrisonerData(form.uuid)" type="button" icon="pi pi-refresh" label="Refresh" severity="secondary" />
             <Button @click="emits('close')" type="button" icon="pi pi-times" iconPos="right" label="Tutup" severity="info" />
         </div>
     </div>
@@ -270,6 +327,6 @@ watch(
         </div>
     </div>
     <Dialog v-model:visible="resetPinModal.isVisible" header="Reset Pin" :modal="true">
-        <reset-pin-form :target-id="form.uuid" :target-name="form.name" @close="resetPinModal.closeModal" />
+        <reset-pin-form :target-id="form.uuid" :target-name="form.name" @close="resetPinModal.closeModal" @refresh="loadPrisonerData(form.uuid)" />
     </Dialog>
 </template>
